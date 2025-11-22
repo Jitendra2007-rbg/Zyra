@@ -169,12 +169,16 @@ export const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile Menu Button - Removed as per request */}
-            {/* <div className="md:hidden">
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
-            </div> */}
+            {/* Mobile Dashboard Button for Shop Owners */}
+            <div className="md:hidden flex items-center">
+              {user && userRole === 'shop_owner' && (
+                <Button size="sm" variant="outline" asChild className="mr-2">
+                  <Link to="/shop/dashboard">
+                    Dashboard
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </nav>

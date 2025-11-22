@@ -128,6 +128,16 @@ export const useAuth = () => {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    return { data, error };
+  };
+
   return {
     user,
     session,
@@ -136,5 +146,6 @@ export const useAuth = () => {
     signUp,
     signIn,
     signOut,
+    signInWithGoogle,
   };
 };

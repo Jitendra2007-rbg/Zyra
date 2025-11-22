@@ -25,7 +25,7 @@ const ShopDetails = () => {
     if (id) {
       fetchShop();
     }
-  }, [id]);
+  }, [id, user]);
 
   const fetchShop = async () => {
     try {
@@ -96,9 +96,14 @@ const ShopDetails = () => {
         setFollowerCount(prev => prev + 1);
         toast.success("Following shop");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling follow:", error);
-      toast.error("Failed to update follow status");
+      if (error.code === '23505') { // Unique violation
+        setIsFollowing(true);
+        toast.success("Following shop");
+      } else {
+        toast.error("Failed to update follow status");
+      }
     } finally {
       setFollowLoading(false);
     }
@@ -182,7 +187,7 @@ const ShopDetails = () => {
 
               <Button
                 onClick={handleFollow}
-                disabled={followLoading}
+                disabled={followLoading || isFollowing}
                 className={`mb-4 ${isFollowing ? 'bg-muted text-muted-foreground' : 'bg-[#E7A17A] text-[#132B4C]'}`}
               >
                 {isFollowing ? "Following" : "Follow Shop"}

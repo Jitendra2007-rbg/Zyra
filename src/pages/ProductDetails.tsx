@@ -9,6 +9,7 @@ import { ShoppingCart, Star, Store, Truck, Shield, RefreshCw, ArrowLeft, Chevron
 import { supabase, useCart } from "@/integrations/supabase";
 import { toast } from "sonner";
 import type { Product } from "@/integrations/supabase/hooks/useProducts";
+import DeliveryTimer from "@/components/DeliveryTimer";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -132,6 +133,9 @@ const ProductDetails = () => {
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
+
+        {id && <DeliveryTimer productId={id} />}
+
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images */}
           <div className="space-y-4">
@@ -208,8 +212,8 @@ const ProductDetails = () => {
                       <Star
                         key={i}
                         className={`h-4 w-4 ${i < Math.round(product.rating)
-                            ? "fill-primary text-primary"
-                            : "text-muted-foreground"
+                          ? "fill-primary text-primary"
+                          : "text-muted-foreground"
                           }`}
                       />
                     ))}

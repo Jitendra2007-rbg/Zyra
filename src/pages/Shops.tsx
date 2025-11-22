@@ -22,11 +22,11 @@ const Shops = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { user } = useAuth();
+
   useEffect(() => {
     fetchShops();
-  }, []);
-
-  const { user } = useAuth();
+  }, [user]);
 
   const fetchShops = async () => {
     try {

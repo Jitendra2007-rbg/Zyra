@@ -36,48 +36,53 @@ const Orders = () => {
   };
 
   const renderOrderCard = (order: any) => (
-    <Card key={order.id} className="p-6 border-0 shadow-[var(--shadow-soft)]">
-      <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-        <div>
-          <h3 className="font-bold text-lg mb-1">{order.order_number}</h3>
-          <p className="text-sm text-muted-foreground">
-            Ordered on {new Date(order.created_at).toLocaleDateString('en-IN')}
-          </p>
+    <Link to={`/orders/${order.id}`} key={order.id} className="block transition-transform hover:scale-[1.01]">
+      <Card className="p-6 border-0 shadow-[var(--shadow-soft)] hover:shadow-md transition-shadow">
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+          <div>
+            <h3 className="font-bold text-lg mb-1">{order.order_number}</h3>
+            <p className="text-sm text-muted-foreground">
+              Ordered on {new Date(order.created_at).toLocaleDateString('en-IN')}
+            </p>
+          </div>
+          {getStatusBadge(order.status)}
         </div>
-        {getStatusBadge(order.status)}
-      </div>
 
-      {order.order_items?.map((item: any, idx: number) => (
-        <div key={idx} className="flex gap-4 mb-4">
-          <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted shrink-0">
-            <img
-              src={item.products?.image_url || "/placeholder.svg"}
-              alt={item.products?.name}
-              className="h-full w-full object-cover"
-            />
+        {order.order_items?.map((item: any, idx: number) => (
+          <div key={idx} className="flex gap-4 mb-4">
+            <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted shrink-0">
+              <img
+                src={item.products?.image_url || "/placeholder.svg"}
+                alt={item.products?.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground mb-1">{order.shops?.name}</p>
+              <h4 className="font-semibold mb-1">{item.products?.name}</h4>
+              <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+              {item.size && <p className="text-sm text-muted-foreground">Size: {item.size}</p>}
+              {item.color && <p className="text-sm text-muted-foreground">Color: {item.color}</p>}
+            </div>
+            <div className="text-right">
+              <p className="font-bold text-primary">₹{item.price.toLocaleString('en-IN')}</p>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground mb-1">{order.shops?.name}</p>
-            <h4 className="font-semibold mb-1">{item.products?.name}</h4>
-            <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
-            {item.size && <p className="text-sm text-muted-foreground">Size: {item.size}</p>}
-            {item.color && <p className="text-sm text-muted-foreground">Color: {item.color}</p>}
-          </div>
-          <div className="text-right">
-            <p className="font-bold text-primary">₹{item.price.toLocaleString('en-IN')}</p>
-          </div>
+        ))}
+
+        <div className="flex items-center justify-between pt-4 border-t">
+          <p className="font-semibold">Total Amount</p>
+          <p className="text-xl font-bold text-primary">₹{order.total_amount.toLocaleString('en-IN')}</p>
         </div>
-      ))}
 
-      <div className="flex items-center justify-between pt-4 border-t">
-        <p className="font-semibold">Total Amount</p>
-        <p className="text-xl font-bold text-primary">₹{order.total_amount.toLocaleString('en-IN')}</p>
-      </div>
-
-      {order.status === "delivered" && (
-        <Button className="w-full mt-4">Order Again</Button>
-      )}
-    </Card>
+        {order.status === "delivered" && (
+          <Button className="w-full mt-4" onClick={(e) => {
+            e.preventDefault(); // Prevent navigation when clicking this button
+            // Add re-order logic here
+          }}>Order Again</Button>
+        )}
+      </Card>
+    </Link>
   );
 
   return (

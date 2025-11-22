@@ -28,6 +28,9 @@ const CheckoutSummary = lazy(() => import("./pages/CheckoutSummary"));
 const CheckoutPayment = lazy(() => import("./pages/CheckoutPayment"));
 const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ShopOrderDetails = lazy(() => import("./pages/ShopOrderDetails"));
+const OrderVerification = lazy(() => import("./pages/OrderVerification"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
 
 const queryClient = new QueryClient();
 
@@ -66,12 +69,15 @@ const App = () => (
               <Route path="/product/:id" element={<ProtectedRoute><ProductDetails /></ProtectedRoute>} />
               <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
               <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+              <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/shops" element={<ProtectedRoute><Shops /></ProtectedRoute>} />
               <Route path="/shop/:id" element={<ProtectedRoute><ShopDetails /></ProtectedRoute>} />
               <Route path="/shop/setup" element={<ProtectedRoute requireRole="shop_owner"><ShopSetup /></ProtectedRoute>} />
               <Route path="/shop/dashboard" element={<ProtectedRoute requireRole="shop_owner"><ShopDashboard /></ProtectedRoute>} />
               <Route path="/shop/orders" element={<ProtectedRoute requireRole="shop_owner"><ShopOrders /></ProtectedRoute>} />
+              <Route path="/shop/orders/:orderId" element={<ProtectedRoute requireRole="shop_owner"><ShopOrderDetails /></ProtectedRoute>} />
+              <Route path="/verify-order/:orderId" element={<ProtectedRoute><OrderVerification /></ProtectedRoute>} />
               <Route path="/shop/products" element={<ProtectedRoute requireRole="shop_owner"><ShopProducts /></ProtectedRoute>} />
               <Route path="/shop/products/new" element={<ProtectedRoute requireRole="shop_owner"><ShopProductNew /></ProtectedRoute>} />
               <Route path="/shop/products/:id/edit" element={<ProtectedRoute requireRole="shop_owner"><ShopProductEdit /></ProtectedRoute>} />

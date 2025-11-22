@@ -293,6 +293,20 @@ const Profile = () => {
 
                   <Separator />
 
+                  {/* Shop Dashboard Shortcut */}
+                  {profile?.role === 'shop_owner' && (
+                    <Button
+                      className="w-full mb-6 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white shadow-md"
+                      size="lg"
+                      asChild
+                    >
+                      <Link to="/shop/dashboard">
+                        <Store className="mr-2 h-5 w-5" />
+                        Go to Shop Dashboard
+                      </Link>
+                    </Button>
+                  )}
+
                   {/* Account Actions */}
                   <div className="space-y-4">
                     <h3 className="font-semibold">Account Actions</h3>

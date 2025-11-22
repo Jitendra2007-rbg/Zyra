@@ -62,9 +62,14 @@ export const ShopCard = ({
         setFollowers(prev => prev + 1);
         toast.success("Following shop");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling follow:", error);
-      toast.error("Failed to update follow status");
+      if (error.code === '23505') { // Unique violation
+        setIsFollowing(true);
+        toast.success("Following shop");
+      } else {
+        toast.error("Failed to update follow status");
+      }
     } finally {
       setLoading(false);
     }
@@ -104,7 +109,7 @@ export const ShopCard = ({
           <Button
             variant={isFollowing ? "secondary" : "outline"}
             onClick={handleFollow}
-            disabled={loading}
+            disabled={loading || isFollowing}
           >
             {isFollowing ? "Following" : "Follow"}
           </Button>

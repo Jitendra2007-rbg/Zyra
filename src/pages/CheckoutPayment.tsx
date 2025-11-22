@@ -85,40 +85,85 @@ const CheckoutPayment = () => {
       return;
     }
 
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Create Order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: totalAmount,
-          status: 'pending',
-          payment_method: paymentMethod,
-          delivery_address: selectedAddress
-            ? `${selectedAddress.full_name}, ${selectedAddress.address_line1}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.postal_code}, Phone: ${selectedAddress.phone}`
-            : 'Address not found' // Fallback, though flow should prevent this
-        })
-        .select()
-        .single();
+      // Group items by shop_id
+      const shopItems = new Map<string, CartItem[]>();
+      cartItems.forEach(item => {
+        const shopId = item.products.shop_id;
+        if (!shopItems.has(shopId)) {
+          shopItems.set(shopId, []);
+        }
+        shopItems.get(shopId)?.push(item);
+      });
 
-      if (orderError) throw orderError;
+      // Create an order for each shop
+      for (const [shopId, items] of shopItems) {
+        const shopTotal = items.reduce((sum, item) => sum + (item.products.price * item.quantity), 0);
+        const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      // 2. Create Order Items
-      const orderItems = cartItems.map(item => ({
-        order_id: orderData.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price: item.products.price
-      }));
+        // 1. Create Order
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            shop_id: shopId,
+            order_number: orderNumber,
+            status: 'pending',
+            total_amount: shopTotal,
+            payment_method: paymentMethod,
+            payment_status: 'pending',
+            delivery_address: `${selectedAddress.full_name}, ${selectedAddress.address_line1}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.postal_code}`,
+            delivery_latitude: selectedAddress.latitude,
+            delivery_longitude: selectedAddress.longitude,
+            customer_name: selectedAddress.full_name,
+            customer_phone: selectedAddress.phone,
+            customer_email: user.email || '',
+          })
+          .select()
+          .single();
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+        if (orderError) throw orderError;
 
-      if (itemsError) throw itemsError;
+        // 2. Create Order Items
+        const orderItems = items.map(item => ({
+          order_id: orderData.id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.products.price,
+          // Add size/color if available in cart item
+        }));
 
-      // 3. Clear Cart
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+      }
+
+      // 3. Decrement Stock
+      for (const item of cartItems) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product) {
+          const newStock = Math.max(0, product.stock_quantity - item.quantity);
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newStock })
+            .eq('id', item.product_id);
+        }
+      }
+
+      // 4. Clear Cart
       const { error: clearCartError } = await supabase
         .from('cart_items')
         .delete()
@@ -128,9 +173,9 @@ const CheckoutPayment = () => {
 
       toast.success("Order placed successfully!");
       navigate("/orders");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error placing order:", error);
-      toast.error("Failed to place order");
+      toast.error(error.message || "Failed to place order");
     } finally {
       setLoading(false);
     }
