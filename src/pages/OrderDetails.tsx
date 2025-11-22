@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,54 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Map from "@/components/Map";
+import { Order } from "@/types";
 
 const OrderDetails = () => {
     const { orderId } = useParams();
-    const [order, setOrder] = useState<any>(null);
+    const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
 
     const [timeLeft, setTimeLeft] = useState<string>("");
+
+    const fetchOrderDetails = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select(`
+          *,
+          order_items (
+            *,
+            products (
+              name,
+              image_url,
+              shop_id
+            )
+          ),
+          shops (
+            name,
+            phone,
+            email,
+            address
+          )
+        `)
+                .eq('id', orderId)
+                .single();
+
+            if (error) throw error;
+            setOrder(data as Order);
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            toast.error("Failed to load order details");
+        } finally {
+            setLoading(false);
+        }
+    }, [orderId]);
 
     useEffect(() => {
         if (orderId) {
             fetchOrderDetails();
         }
-    }, [orderId]);
+    }, [orderId, fetchOrderDetails]);
 
     useEffect(() => {
         if (!order || order.status === 'delivered') return;
@@ -48,42 +83,10 @@ const OrderDetails = () => {
         return () => clearInterval(timer);
     }, [order]);
 
-    const fetchOrderDetails = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select(`
-          *,
-          order_items (
-            *,
-            products (
-              name,
-              image_url,
-              shop_id
-            )
-          ),
-          shops (
-            name,
-            phone,
-            email,
-            address
-          )
-        `)
-                .eq('id', orderId)
-                .single();
 
-            if (error) throw error;
-            setOrder(data);
-        } catch (error) {
-            console.error('Error fetching order details:', error);
-            toast.error("Failed to load order details");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const getStatusBadge = (status: string) => {
-        const statusConfig: Record<string, any> = {
+        const statusConfig: Record<string, { label: string; icon: any; color: string }> = {
             "pending": { label: "Pending", icon: Package, color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
             "packed": { label: "Packed", icon: Package, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
             "shipped": { label: "On the Way", icon: Truck, color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" },
@@ -182,7 +185,7 @@ const OrderDetails = () => {
                         <Card className="p-6 border-0 shadow-[var(--shadow-soft)]">
                             <h2 className="text-xl font-bold mb-4">Items</h2>
                             <div className="space-y-4">
-                                {order.order_items?.map((item: any) => (
+                                {order.order_items?.map((item) => (
                                     <Link
                                         to={`/product/${item.product_id}`}
                                         key={item.id}

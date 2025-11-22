@@ -1,0 +1,14 @@
+
+C:\Users\Jitendra\Desktop\sample\Zyra\src\pages\OrderDetails.tsx
+   16:40  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+   25:8   warning  React Hook useEffect has a missing dependency: 'fetchOrderDetails'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   86:44  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  185:64  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+C:\Users\Jitendra\Desktop\sample\Zyra\src\pages\ShopOrders.tsx
+  20:40  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  28:6   warning  React Hook useEffect has a missing dependency: 'fetchOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  96:44  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+✖ 7 problems (5 errors, 2 warnings)
+

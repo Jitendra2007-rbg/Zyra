@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { ArrowLeft, QrCode } from "lucide-react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import Map from "@/components/Map";
+import { Order } from "@/types";
 
 import { useShop } from "@/integrations/supabase";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,17 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ShopOrders = () => {
   const { shop } = useShop();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
 
-  useEffect(() => {
-    if (shop?.id) {
-      fetchOrders();
-    }
-  }, [shop?.id]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -53,7 +48,13 @@ const ShopOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [shop?.id]);
+
+  useEffect(() => {
+    if (shop?.id) {
+      fetchOrders();
+    }
+  }, [shop?.id, fetchOrders]);
 
   const updateStatus = async (orderId: string, status: string) => {
     try {
@@ -93,7 +94,7 @@ const ShopOrders = () => {
     return filtered;
   };
 
-  const renderOrderList = (ordersToRender: any[]) => {
+  const renderOrderList = (ordersToRender: Order[]) => {
     if (ordersToRender.length === 0) {
       return <div className="text-center py-8 text-muted-foreground">No orders found</div>;
     }
