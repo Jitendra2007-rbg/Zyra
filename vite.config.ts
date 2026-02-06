@@ -5,9 +5,11 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: true, // Listen on all addresses (0.0.0.0)
     port: 8080,
+    historyApiFallback: true, // Ensure SPA fallback for 404s
   },
+  base: "/", // Explicit base path
   plugins: [react()],
   resolve: {
     alias: {

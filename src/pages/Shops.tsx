@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { ShopCard } from "@/components/ShopCard";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase, useAuth } from "@/integrations/supabase";
+import { useQuery } from "@tanstack/react-query";
 
 interface Shop {
   id: number | string;
@@ -19,18 +20,12 @@ interface Shop {
 }
 
 const Shops = () => {
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchShops();
-  }, [user]);
-
-  const fetchShops = async () => {
-    try {
-      // Only fetch active shops
+  const { data: shops = [], isLoading: loading } = useQuery<Shop[]>({
+    queryKey: ['shops', user?.id], // efficient key including user status
+    queryFn: async () => {
+      // 1. Fetch all active shops
       const { data: shopsData, error: shopsError } = await supabase
         .from('shops')
         .select('*')
@@ -38,51 +33,62 @@ const Shops = () => {
 
       if (shopsError) throw shopsError;
 
-      // Fetch product counts and follower counts for each shop
-      const shopsWithCounts = await Promise.all(
-        (shopsData || []).map(async (shop: any) => {
-          const { count: productCount } = await supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('shop_id', shop.id)
-          // .eq('is_active', true); // Relaxed filter
+      if (!shopsData || shopsData.length === 0) {
+        return [];
+      }
 
-          const { count: followerCount } = await supabase
-            .from('shop_followers')
-            .select('*', { count: 'exact', head: true })
-            .eq('shop_id', shop.id);
+      const shopIds = shopsData.map(s => s.id);
 
-          let isFollowing = false;
-          if (user) {
-            const { data: followData } = await supabase
-              .from('shop_followers')
-              .select('*')
-              .eq('shop_id', shop.id)
-              .eq('user_id', user.id)
-              .maybeSingle();
-            isFollowing = !!followData;
-          }
+      // 2. Fetch product counts (fetching shop_id only)
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('shop_id')
+        .in('shop_id', shopIds);
 
-          return {
-            id: shop.id,
-            name: shop.name,
-            logo: shop.logo_url || "/placeholder.svg",
-            rating: shop.rating || 0,
-            followers: followerCount || 0,
-            products: productCount || 0,
-            description: shop.description || "No description available",
-            isFollowing,
-          };
-        })
-      );
+      // 3. Fetch follower counts (fetching shop_id only)
+      const { data: followersData } = await supabase
+        .from('shop_followers')
+        .select('shop_id')
+        .in('shop_id', shopIds);
 
-      setShops(shopsWithCounts);
-    } catch (error) {
-      console.error("Error fetching shops:", error);
-    } finally {
-      setLoading(false);
+      // 4. Fetch user's following status
+      let userFollows: Set<any> = new Set();
+      if (user) {
+        const { data: myFollows } = await supabase
+          .from('shop_followers')
+          .select('shop_id')
+          .eq('user_id', user.id)
+          .in('shop_id', shopIds);
+
+        if (myFollows) {
+          myFollows.forEach(f => userFollows.add(f.shop_id));
+        }
+      }
+
+      // Aggregating counts in memory
+      const productCounts: Record<string, number> = {};
+      productsData?.forEach((p: any) => {
+        productCounts[p.shop_id] = (productCounts[p.shop_id] || 0) + 1;
+      });
+
+      const followerCounts: Record<string, number> = {};
+      followersData?.forEach((f: any) => {
+        followerCounts[f.shop_id] = (followerCounts[f.shop_id] || 0) + 1;
+      });
+
+      // Construct final array
+      return shopsData.map((shop: any) => ({
+        id: shop.id,
+        name: shop.name,
+        logo: shop.logo_url || "/placeholder.svg",
+        rating: shop.rating || 0,
+        followers: followerCounts[shop.id] || 0,
+        products: productCounts[shop.id] || 0,
+        description: shop.description || "No description available",
+        isFollowing: userFollows.has(shop.id),
+      }));
     }
-  };
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,7 +134,7 @@ const Shops = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {shops.map((shop) => (
+            {shops.map((shop: Shop) => (
               <ShopCard key={shop.id} {...shop} />
             ))}
           </div>
