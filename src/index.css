@@ -11,100 +11,101 @@
 
 @layer base {
   :root {
-    /* Creamy White (#FAF7F2) - Page backgrounds and surfaces */
-    --background: 36 33% 96%; 
-    --foreground: 0 0% 10%; /* Deep Charcoal (#1A1A1A) approx */
+    /* Prismatic White (#f8fafc) - Crisp, cool white background */
+    --background: 210 40% 98%;
+    /* Deep Slate (#0f172a) - High contrast dark blue-grey for text */
+    --foreground: 215 28% 17%;
 
-    /* Creamy White for cards */
-    --card: 36 33% 96%;
-    --card-foreground: 0 0% 10%;
+    /* White for cards */
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
 
-    --popover: 36 33% 96%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
 
-    /* Soft Coral Peach (#E7A17A) - Primary buttons */
-    --primary: 22 66% 69%;
-    --primary-foreground: 215 60% 19%; /* Midnight Navy (#132B4C) for text on primary */
+    /* Electric Indigo (#6366f1) - Primary Brand Color */
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    /* White text on primary */
 
-    /* Warm Taupe (#D6C3B2) - Secondary/Muted */
-    --secondary: 28 26% 77%;
-    --secondary-foreground: 215 60% 19%;
+    /* Slate 100/200 - Secondary/Muted */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 28 26% 77%;
-    --muted-foreground: 0 0% 40%; /* Softer charcoal */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Soft Coral Peach as accent */
-    --accent: 22 66% 69%;
-    --accent-foreground: 215 60% 19%;
+    /* Vivid Rose (#f43f5e) - Accent */
+    --accent: 350 89% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 28 26% 85%; /* Light Taupe */
-    --input: 28 26% 85%;
-    --ring: 22 66% 69%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 239 84% 67%;
 
-    --radius: 0.75rem; /* 12px */
-    
+    --radius: 0.75rem;
+    /* 12px */
+
     /* Custom Design Tokens */
-    /* Midnight Navy (#132B4C) */
-    --midnight-navy: 215 60% 19%;
-    
-    --gradient-hero: linear-gradient(135deg, hsl(36 33% 96%), hsl(28 26% 90%));
-    
-    /* Soft shadow only: 0 2px 10px rgba(214,195,178,0.25) -> HSL(28, 26%, 77%) */
-    --shadow-soft: 0 2px 10px hsla(28, 26%, 77%, 0.25);
-    
-    /* Hover shadow: 0 4px 16px rgba(214,195,178,0.32) */
-    --shadow-medium: 0 4px 16px hsla(28, 26%, 77%, 0.32);
-    
-    --shadow-strong: 0 8px 32px hsla(28, 26%, 77%, 0.4);
+    --midnight-navy: 239 84% 67%;
+    /* Re-mapped to Primary for consistency in legacy usage */
+
+    /* Vibrant Gradient: Indigo to Rose/Purple */
+    --gradient-hero: linear-gradient(135deg, hsl(239 84% 67%), hsl(350 89% 60%));
+
+    /* Colored Shadows for Vibrancy */
+    --shadow-soft: 0 2px 10px hsla(239, 84%, 67%, 0.1);
+    --shadow-medium: 0 4px 16px hsla(239, 84%, 67%, 0.15);
+    --shadow-strong: 0 8px 32px hsla(239, 84%, 67%, 0.2);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 36 33% 96%;
-    --sidebar-foreground: 215 60% 19%;
-    --sidebar-primary: 215 60% 19%;
-    --sidebar-primary-foreground: 36 33% 96%;
-    --sidebar-accent: 28 26% 85%;
-    --sidebar-accent-foreground: 215 60% 19%;
-    --sidebar-border: 28 26% 85%;
-    --sidebar-ring: 22 66% 69%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 28% 17%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 239 84% 67%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 239 84% 67%;
   }
 
   .dark {
-    /* Dark mode adjustments if needed, but user requested Creamy White everywhere. 
-       Keeping a dark palette just in case, but aligning with warm tones. */
-    --background: 215 60% 10%;
-    --foreground: 36 33% 96%;
+    /* Deep Space Blue (#020617) */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 215 60% 12%;
-    --card-foreground: 36 33% 96%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 215 60% 12%;
-    --popover-foreground: 36 33% 96%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 22 66% 69%;
-    --primary-foreground: 215 60% 19%;
+    /* Electric Indigo remains consistent */
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 60% 15%;
-    --secondary-foreground: 36 33% 96%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 215 60% 15%;
-    --muted-foreground: 28 26% 70%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 22 66% 69%;
-    --accent-foreground: 215 60% 19%;
+    --accent: 350 89% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 36 33% 96%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 215 60% 20%;
-    --input: 215 60% 20%;
-    --ring: 22 66% 69%;
-    
-    --shadow-soft: 0 2px 10px rgba(0,0,0,0.3);
-    --shadow-medium: 0 4px 16px rgba(0,0,0,0.4);
-    --shadow-strong: 0 8px 32px rgba(0,0,0,0.5);
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 239 84% 67%;
+
+    --shadow-soft: 0 2px 10px rgba(99, 102, 241, 0.2);
+    --shadow-medium: 0 4px 16px rgba(99, 102, 241, 0.3);
+    --shadow-strong: 0 8px 32px rgba(99, 102, 241, 0.4);
   }
 }
 
@@ -115,16 +116,24 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    /* Ensure global background is Creamy White */
-    background-color: hsl(var(--background)); 
+    /* Ensure global background is the new Prismatic White or Dark Blue */
+    background-color: hsl(var(--background));
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif font-bold text-[#132B4C]; /* Midnight Navy for headings */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-bold text-foreground;
+    /* Use variable instead of hardcoded hex */
   }
-  
-  p, span, div {
-    @apply text-[#1A1A1A]; /* Deep Charcoal for body */
+
+  p,
+  span,
+  div {
+    @apply text-foreground;
+    /* Use variable instead of hardcoded hex */
   }
 }
-

@@ -21,6 +21,27 @@ const ShopOrderDetails = () => {
         if (orderId) {
             fetchOrderDetails();
         }
+
+        const channel = supabase
+            .channel('shop-order-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `id=eq.${orderId}`,
+                },
+                (payload) => {
+                    console.log('Order updated:', payload);
+                    setOrder((prev: any) => prev ? { ...prev, ...payload.new } : null);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [orderId]);
 
     const fetchOrderDetails = async () => {
@@ -196,17 +217,73 @@ const ShopOrderDetails = () => {
 
                         {/* Map */}
                         <Card className="p-6 border-0 shadow-[var(--shadow-soft)]">
-                            <h2 className="text-xl font-bold mb-4">Delivery Location</h2>
-                            <Map
-                                center={[Number(order.delivery_latitude) || 12.9716, Number(order.delivery_longitude) || 77.5946]}
-                                zoom={15}
-                                markers={[{
-                                    position: [Number(order.delivery_latitude) || 12.9716, Number(order.delivery_longitude) || 77.5946],
-                                    title: order.customer_name,
-                                    description: order.delivery_address,
-                                }]}
-                                className="h-[300px] w-full rounded-lg"
-                            />
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">Delivery Location</h2>
+                                {(() => {
+                                    const SHOP_LOCATION = { lat: 17.3850, lon: 78.4867 };
+                                    const customerLat = Number(order.delivery_latitude);
+                                    const customerLon = Number(order.delivery_longitude);
+                                    const hasCustomerLocation = !isNaN(customerLat) && !isNaN(customerLon) && customerLat !== 0;
+
+                                    if (hasCustomerLocation) {
+                                        const R = 6371; // Radius of the earth in km
+                                        const dLat = (customerLat - SHOP_LOCATION.lat) * Math.PI / 180;
+                                        const dLon = (customerLon - SHOP_LOCATION.lon) * Math.PI / 180;
+                                        const a =
+                                            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                            Math.cos(SHOP_LOCATION.lat * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) *
+                                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                                        const distance = (R * c).toFixed(2);
+
+                                        return (
+                                            <Badge variant="outline" className="text-lg px-3 py-1 border-primary text-primary">
+                                                Distance: {distance} km
+                                            </Badge>
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                            </div>
+
+                            {(() => {
+                                const SHOP_LOCATION = { lat: 17.3850, lon: 78.4867 };
+                                const customerLat = Number(order.delivery_latitude);
+                                const customerLon = Number(order.delivery_longitude);
+                                const hasCustomerLocation = !isNaN(customerLat) && !isNaN(customerLon) && customerLat !== 0;
+
+                                const markers: Array<{
+                                    position: [number, number];
+                                    title: string;
+                                    description?: string;
+                                    color?: 'blue' | 'red';
+                                }> = [
+                                        {
+                                            position: [SHOP_LOCATION.lat, SHOP_LOCATION.lon] as [number, number],
+                                            title: "Shop Location",
+                                            description: "Your Shop",
+                                            color: "blue"
+                                        }
+                                    ];
+
+                                if (hasCustomerLocation) {
+                                    markers.push({
+                                        position: [customerLat, customerLon] as [number, number],
+                                        title: order.customer_name || "Customer",
+                                        description: order.delivery_address,
+                                        color: "red" as const
+                                    });
+                                }
+
+                                return (
+                                    <Map
+                                        center={[SHOP_LOCATION.lat, SHOP_LOCATION.lon]}
+                                        zoom={12}
+                                        markers={markers}
+                                        className="h-[400px] w-full rounded-lg"
+                                    />
+                                );
+                            })()}
                         </Card>
                     </div>
 

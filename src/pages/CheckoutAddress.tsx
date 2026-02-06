@@ -14,6 +14,7 @@ const CheckoutAddress = () => {
   const navigate = useNavigate();
   const { addAddress } = useAddresses();
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState<{ lat: number | null; lon: number | null }>({ lat: null, lon: null });
   const [formData, setFormData] = useState({
     fullName: "",
     mobile: "",
@@ -22,6 +23,28 @@ const CheckoutAddress = () => {
     city: "",
     state: "",
   });
+
+  const handleUseLocation = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    if ("geolocation" in navigator) {
+      toast.info("Requesting location access...");
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+          toast.success("Location captured successfully");
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast.error("Location access denied or failed. Please enable location services.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by this browser.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +59,8 @@ const CheckoutAddress = () => {
       state: formData.state,
       postal_code: formData.pincode,
       country: "India", // Defaulting to India
-      latitude: null,
-      longitude: null,
+      latitude: location.lat,
+      longitude: location.lon,
       is_default: true // Set as default for now
     });
 
@@ -170,6 +193,23 @@ const CheckoutAddress = () => {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
+            </div>
+
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full flex items-center gap-2"
+                onClick={handleUseLocation}
+              >
+                <MapPin className="h-4 w-4" />
+                {location.lat ? "Location Captured ✓" : "Use My Location"}
+              </Button>
+              {location.lat && (
+                <p className="text-xs text-green-600 mt-1 text-center">
+                  Coordinates: {location.lat.toFixed(4)}, {location.lon?.toFixed(4)}
+                </p>
+              )}
             </div>
 
             <Button type="submit" size="lg" className="w-full mt-6" disabled={loading}>

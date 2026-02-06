@@ -60,6 +60,33 @@ const OrderDetails = () => {
     }, [orderId, fetchOrderDetails]);
 
     useEffect(() => {
+        if (!orderId) return;
+
+        const channel = supabase
+            .channel('order-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `id=eq.${orderId}`,
+                },
+                (payload) => {
+                    console.log('Order updated:', payload);
+                    setOrder((prev) => prev ? { ...prev, ...payload.new } : null);
+                    // Optionally refetch if you need deep relation updates, but for status/location payload.new is usually enough
+                    // fetchOrderDetails(); 
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [orderId]);
+
+    useEffect(() => {
         if (!order || order.status === 'delivered') return;
 
         const calculateTimeLeft = () => {

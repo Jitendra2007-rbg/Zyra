@@ -18,19 +18,36 @@ interface MapProps {
     position: [number, number];
     title: string;
     description?: string;
+    color?: 'blue' | 'red' | 'green' | 'orange' | 'yellow' | 'violet' | 'grey' | 'black';
   }>;
   className?: string;
 }
 
-const Map = ({ 
+const getMarkerIcon = (color: string = 'blue') => {
+  return new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+};
+
+const Map = ({
   center = [12.9716, 77.5946], // Default: Bangalore, India
   zoom = 13,
   markers = [],
   className = "h-[400px] w-full rounded-lg"
 }: MapProps) => {
+  // Calculate center based on markers if not provided or if multiple markers
+  const mapCenter = markers.length > 0 && markers.length <= 2
+    ? markers[0].position
+    : center;
+
   return (
     <MapContainer
-      center={center}
+      center={mapCenter}
       zoom={zoom}
       scrollWheelZoom={false}
       className={className}
@@ -39,10 +56,14 @@ const Map = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      
+
       {markers.length > 0 ? (
         markers.map((marker, index) => (
-          <Marker key={index} position={marker.position}>
+          <Marker
+            key={index}
+            position={marker.position}
+            icon={getMarkerIcon(marker.color || 'blue')}
+          >
             <Popup>
               <div className="p-2">
                 <h3 className="font-bold">{marker.title}</h3>
