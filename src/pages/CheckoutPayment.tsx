@@ -25,7 +25,7 @@ interface CartItem {
 
 const CheckoutPayment = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { addresses } = useAddresses();
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
@@ -80,6 +80,12 @@ const CheckoutPayment = () => {
 
   const handlePlaceOrder = async () => {
     if (!user) return;
+
+    if (userRole === 'shop_owner') {
+      toast.error("Shop owners cannot place orders. Please use a customer account.");
+      return;
+    }
+
     if (cartItems.length === 0) {
       toast.error("Your cart is empty");
       return;

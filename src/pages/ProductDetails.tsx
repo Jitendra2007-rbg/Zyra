@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, Star, Store, Truck, Shield, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
-import { supabase, useCart } from "@/integrations/supabase";
+import { supabase, useCart, useAuth } from "@/integrations/supabase";
 import { toast } from "sonner";
 import type { Product } from "@/integrations/supabase/hooks/useProducts";
 import DeliveryTimer from "@/components/DeliveryTimer";
@@ -20,6 +20,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToCart } = useCart();
+  const { userRole } = useAuth();
 
   useEffect(() => {
     if (id) {
@@ -305,10 +306,19 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            <Button size="lg" className="w-full" onClick={handleAddToCart}>
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              Add to Cart
-            </Button>
+            {userRole === 'shop_owner' ? (
+              <div className="p-4 bg-muted rounded-lg text-center">
+                <p className="font-medium">Shop Owner Account</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You are viewing this product as a shop owner. To purchase items, please use a customer account.
+                </p>
+              </div>
+            ) : (
+              <Button size="lg" className="w-full" onClick={handleAddToCart} disabled={loading}>
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Add to Cart
+              </Button>
+            )}
 
             <Separator />
 
