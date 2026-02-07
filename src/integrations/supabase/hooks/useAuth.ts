@@ -77,20 +77,25 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Error fetching user role:', error);
-        setUserRole('customer'); // Default to customer if error
-        setLoading(false);
+        // If we can't fetch the role, we shouldn't assume 'customer'.
+        // We should force a re-login to ensure data consistency.
+        await signOut();
+        setUserRole(null);
         return;
       }
 
       if (data) {
         setUserRole(data.role as AppRole);
       } else {
-        // No role found, default to customer
-        setUserRole('customer');
+        // No role found (e.g. user deleted from DB but has valid token).
+        console.warn("User has no role. Logging out.");
+        await signOut();
+        setUserRole(null);
       }
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
-      setUserRole('customer');
+      await signOut();
+      setUserRole(null);
     } finally {
       setLoading(false);
     }
