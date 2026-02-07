@@ -53,6 +53,27 @@ const ShopOrders = () => {
   useEffect(() => {
     if (shop?.id) {
       fetchOrders();
+
+      const channel = supabase
+        .channel('shop-orders-list-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Listen to INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'orders',
+            filter: `shop_id=eq.${shop.id}`,
+          },
+          (payload) => {
+            console.log('Shop Orders updated:', payload);
+            fetchOrders(); // Refetch to keep it simple and accurate
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [shop?.id, fetchOrders]);
 
@@ -75,8 +96,10 @@ const ShopOrders = () => {
 
     if (activeTab === "pending") {
       filtered = filtered.filter(o => ['pending', 'packed', 'shipped'].includes(o.status));
-    } else if (activeTab === "completed") {
-      filtered = filtered.filter(o => ['delivered', 'cancelled'].includes(o.status));
+    } else if (activeTab === "delivered") {
+      filtered = filtered.filter(o => o.status === 'delivered');
+    } else if (activeTab === "cancelled") {
+      filtered = filtered.filter(o => o.status === 'cancelled');
     } else {
       // For "all", sort incomplete orders to top
       filtered.sort((a, b) => {
@@ -190,10 +213,11 @@ const ShopOrders = () => {
           <div className="text-center py-8">Loading orders...</div>
         ) : (
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="all">All Orders</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="delivered">Delivered</TabsTrigger>
+              <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
               {renderOrderList(getFilteredOrders())}
@@ -201,7 +225,10 @@ const ShopOrders = () => {
             <TabsContent value="pending">
               {renderOrderList(getFilteredOrders())}
             </TabsContent>
-            <TabsContent value="completed">
+            <TabsContent value="delivered">
+              {renderOrderList(getFilteredOrders())}
+            </TabsContent>
+            <TabsContent value="cancelled">
               {renderOrderList(getFilteredOrders())}
             </TabsContent>
           </Tabs>

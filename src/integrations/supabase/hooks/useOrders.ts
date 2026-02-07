@@ -46,6 +46,27 @@ export const useOrders = () => {
   useEffect(() => {
     if (user) {
       fetchOrders();
+
+      const channel = supabase
+        .channel('user-orders-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('User Orders updated:', payload);
+            fetchOrders();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     } else {
       setOrders([]);
       setLoading(false);

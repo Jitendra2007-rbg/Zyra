@@ -18,6 +18,7 @@ const OrderDetails = () => {
     const [loading, setLoading] = useState(true);
 
     const [timeLeft, setTimeLeft] = useState<string>("");
+    const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
     const fetchOrderDetails = useCallback(async () => {
         try {
@@ -37,7 +38,10 @@ const OrderDetails = () => {
             name,
             phone,
             email,
-            address
+            email,
+            address,
+            latitude,
+            longitude
           )
         `)
                 .eq('id', orderId)
@@ -274,17 +278,88 @@ const OrderDetails = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-4 h-[200px] w-full rounded-lg overflow-hidden">
-                                <Map
-                                    center={[Number(order.delivery_latitude) || 12.9716, Number(order.delivery_longitude) || 77.5946]}
-                                    zoom={15}
-                                    markers={[{
-                                        position: [Number(order.delivery_latitude) || 12.9716, Number(order.delivery_longitude) || 77.5946],
-                                        title: "Delivery Location",
-                                        description: order.delivery_address,
-                                    }]}
-                                    className="h-full w-full"
-                                />
+                            <div className="mt-4 h-[300px] w-full rounded-lg overflow-hidden relative">
+                                {(() => {
+                                    const shopLat = Number(order.shops?.latitude);
+                                    const shopLon = Number(order.shops?.longitude);
+                                    const customerLat = Number(order.delivery_latitude);
+                                    const customerLon = Number(order.delivery_longitude);
+
+                                    const hasCustomerLocation = !isNaN(customerLat) && !isNaN(customerLon) && customerLat !== 0;
+                                    const hasShopLocation = !isNaN(shopLat) && !isNaN(shopLon) && shopLat !== 0;
+
+                                    // If we have customer location, show it
+                                    if (hasCustomerLocation) {
+                                        return (
+                                            <Map
+                                                center={[customerLat, customerLon]}
+                                                zoom={15}
+                                                markers={[{
+                                                    position: [customerLat, customerLon],
+                                                    title: "Delivery Location",
+                                                    description: order.delivery_address,
+                                                    color: "red"
+                                                }]}
+                                                className="h-full w-full"
+                                            />
+                                        );
+                                    }
+
+                                    // If no customer location but have shop location, show shop location with route hint (conceptually)
+                                    // Or just show shop location
+                                    if (hasShopLocation) {
+                                        return (
+                                            <Map
+                                                center={[shopLat, shopLon]}
+                                                zoom={13}
+                                                markers={[{
+                                                    position: [shopLat, shopLon],
+                                                    title: "Shop Location",
+                                                    description: "Order shipped from here",
+                                                    color: "blue"
+                                                }]}
+                                                className="h-full w-full"
+                                            />
+                                        );
+                                    }
+
+                                    // If neither, fallback to default (Bangalore) but empty markers
+                                    return (
+                                        <Map
+                                            center={[12.9716, 77.5946]}
+                                            zoom={10}
+                                            markers={[]}
+                                            className="h-full w-full"
+                                        />
+                                    );
+                                })()}
+
+                                {(() => {
+                                    // Only show the external link if we DON'T have a customer location, 
+                                    // or maybe just keep it hidden as per user request to "not navigate".
+                                    // User said: "show the map directly here dont navigate to google map site"
+                                    // So we will hide the overlay button if we have what we need.
+
+                                    const customerLat = Number(order.delivery_latitude);
+                                    const customerLon = Number(order.delivery_longitude);
+                                    const hasCustomerLocation = !isNaN(customerLat) && !isNaN(customerLon) && customerLat !== 0;
+
+                                    if (hasCustomerLocation) return null;
+
+                                    return (
+                                        <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-lg shadow-md z-[400]">
+                                            <a
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery_address)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                                            >
+                                                <MapPin className="h-3 w-3" />
+                                                Locate on Google Maps
+                                            </a>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </Card>
                     </div>
@@ -295,6 +370,51 @@ const OrderDetails = () => {
                             <h2 className="text-xl font-bold mb-4">Actions</h2>
 
                             <div className="space-y-4">
+                                {order.status === 'pending' && (
+                                    <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="destructive" className="w-full">
+                                                Cancel Order
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Cancel Order</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="py-4">
+                                                <p>Are you sure you want to cancel this order? This action cannot be undone.</p>
+                                            </div>
+                                            <div className="flex justify-end gap-4">
+                                                <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
+                                                    Keep Order
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={async () => {
+                                                        try {
+                                                            const { error } = await supabase
+                                                                .from('orders')
+                                                                .update({ status: 'cancelled' })
+                                                                .eq('id', order.id);
+
+                                                            if (error) throw error;
+
+                                                            toast.success("Order cancelled successfully");
+                                                            setOrder(prev => prev ? { ...prev, status: 'cancelled' } : null);
+                                                            setIsCancelDialogOpen(false);
+                                                        } catch (error) {
+                                                            console.error("Error cancelling order:", error);
+                                                            toast.error("Failed to cancel order");
+                                                        }
+                                                    }}
+                                                >
+                                                    Yes, Cancel Order
+                                                </Button>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+
                                 {order.status === 'delivered' && (
                                     <Button variant="outline" className="w-full">
                                         Write a Review

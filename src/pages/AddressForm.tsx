@@ -39,7 +39,7 @@ export const AddressForm = ({ open, onOpenChange, onSuccess, address }: AddressF
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error("You must be logged in");
       return;
@@ -48,11 +48,38 @@ export const AddressForm = ({ open, onOpenChange, onSuccess, address }: AddressF
     setLoading(true);
 
     try {
+      // Geocode the address
+      let latitude = null;
+      let longitude = null;
+      try {
+        const query = `${formData.address_line1}, ${formData.city}, ${formData.state}, ${formData.postal_code}`;
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+          headers: {
+            'User-Agent': 'ZyraApp/1.0'
+          }
+        });
+        const data = await response.json();
+        if (data && data.length > 0) {
+          latitude = parseFloat(data[0].lat);
+          longitude = parseFloat(data[0].lon);
+        }
+      } catch (geoError) {
+        console.error("Geocoding failed:", geoError);
+        // Continue without coordinates
+      }
+
+      const addressData = {
+        ...formData,
+        latitude,
+        longitude,
+        user_id: user.id
+      };
+
       if (address) {
         // Update existing address
         const { error } = await supabase
           .from('addresses')
-          .update(formData)
+          .update(addressData)
           .eq('id', address.id);
 
         if (error) throw error;
@@ -61,7 +88,7 @@ export const AddressForm = ({ open, onOpenChange, onSuccess, address }: AddressF
         // Create new address
         const { error } = await supabase
           .from('addresses')
-          .insert([{ ...formData, user_id: user.id }]);
+          .insert([addressData]);
 
         if (error) throw error;
         toast.success("Address added successfully");

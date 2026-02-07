@@ -50,6 +50,13 @@ const ShopOrderDetails = () => {
                 .from('orders')
                 .select(`
           *,
+          shops (
+            name,
+            address,
+            latitude,
+            longitude,
+            phone
+          ),
           order_items (
             *,
             products (
@@ -220,18 +227,21 @@ const ShopOrderDetails = () => {
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold">Delivery Location</h2>
                                 {(() => {
-                                    const SHOP_LOCATION = { lat: 17.3850, lon: 78.4867 };
+                                    const shopLat = Number(order.shops?.latitude);
+                                    const shopLon = Number(order.shops?.longitude);
                                     const customerLat = Number(order.delivery_latitude);
                                     const customerLon = Number(order.delivery_longitude);
+
+                                    const hasShopLocation = !isNaN(shopLat) && !isNaN(shopLon) && shopLat !== 0;
                                     const hasCustomerLocation = !isNaN(customerLat) && !isNaN(customerLon) && customerLat !== 0;
 
-                                    if (hasCustomerLocation) {
+                                    if (hasShopLocation && hasCustomerLocation) {
                                         const R = 6371; // Radius of the earth in km
-                                        const dLat = (customerLat - SHOP_LOCATION.lat) * Math.PI / 180;
-                                        const dLon = (customerLon - SHOP_LOCATION.lon) * Math.PI / 180;
+                                        const dLat = (customerLat - shopLat) * Math.PI / 180;
+                                        const dLon = (customerLon - shopLon) * Math.PI / 180;
                                         const a =
                                             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                                            Math.cos(SHOP_LOCATION.lat * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) *
+                                            Math.cos(shopLat * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) *
                                             Math.sin(dLon / 2) * Math.sin(dLon / 2);
                                         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
                                         const distance = (R * c).toFixed(2);
@@ -247,24 +257,33 @@ const ShopOrderDetails = () => {
                             </div>
 
                             {(() => {
-                                const SHOP_LOCATION = { lat: 17.3850, lon: 78.4867 };
+                                const shopLat = Number(order.shops?.latitude);
+                                const shopLon = Number(order.shops?.longitude);
                                 const customerLat = Number(order.delivery_latitude);
                                 const customerLon = Number(order.delivery_longitude);
+
+                                const hasShopLocation = !isNaN(shopLat) && !isNaN(shopLon) && shopLat !== 0;
                                 const hasCustomerLocation = !isNaN(customerLat) && !isNaN(customerLon) && customerLat !== 0;
+
+                                // Default fallback to Hyderabad if no shop location
+                                const centerLat = hasShopLocation ? shopLat : 17.3850;
+                                const centerLon = hasShopLocation ? shopLon : 78.4867;
 
                                 const markers: Array<{
                                     position: [number, number];
                                     title: string;
                                     description?: string;
                                     color?: 'blue' | 'red';
-                                }> = [
-                                        {
-                                            position: [SHOP_LOCATION.lat, SHOP_LOCATION.lon] as [number, number],
-                                            title: "Shop Location",
-                                            description: "Your Shop",
-                                            color: "blue"
-                                        }
-                                    ];
+                                }> = [];
+
+                                if (hasShopLocation) {
+                                    markers.push({
+                                        position: [shopLat, shopLon] as [number, number],
+                                        title: order.shops?.name || "Shop Location",
+                                        description: order.shops?.address || "Your Shop",
+                                        color: "blue"
+                                    });
+                                }
 
                                 if (hasCustomerLocation) {
                                     markers.push({
@@ -276,12 +295,27 @@ const ShopOrderDetails = () => {
                                 }
 
                                 return (
-                                    <Map
-                                        center={[SHOP_LOCATION.lat, SHOP_LOCATION.lon]}
-                                        zoom={12}
-                                        markers={markers}
-                                        className="h-[400px] w-full rounded-lg"
-                                    />
+                                    <div className="relative">
+                                        <Map
+                                            center={[centerLat, centerLon]}
+                                            zoom={15}
+                                            markers={markers}
+                                            className="h-[400px] w-full rounded-lg"
+                                        />
+                                        {!hasCustomerLocation && (
+                                            <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow-lg z-[400]">
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery_address)}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-2"
+                                                >
+                                                    <MapPin className="h-4 w-4" />
+                                                    View Customer Address on Maps
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })()}
                         </Card>

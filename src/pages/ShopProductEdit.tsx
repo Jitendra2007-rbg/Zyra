@@ -5,11 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { useState } from "react";
+import { ImageUpload } from "@/components/ImageUpload";
 
 const ShopProductEdit = () => {
   const { id } = useParams();
+
+  const [imageUrl, setImageUrl] = useState("");
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,16 +35,11 @@ const ShopProductEdit = () => {
         <Card className="p-6 border-0 shadow-[var(--shadow-soft)]">
           <form className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="images">Product Images</Label>
-              <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-1">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  PNG, JPG up to 10MB
-                </p>
-              </div>
+              <Label>Product Image</Label>
+              <ImageUpload
+                value={imageUrl}
+                onChange={setImageUrl}
+              />
             </div>
 
             <div className="space-y-2">

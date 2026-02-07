@@ -29,12 +29,46 @@ const CheckoutAddress = () => {
     if ("geolocation" in navigator) {
       toast.info("Requesting location access...");
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          });
-          toast.success("Location captured successfully");
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          setLocation({ lat, lon });
+
+          try {
+            toast.info("Fetching address details...");
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+              {
+                headers: {
+                  'User-Agent': 'ZyraApp/1.0'
+                }
+              }
+            );
+            const data = await response.json();
+
+            if (data && data.address) {
+              const addr = data.address;
+              // Construct address string from components
+              const street = addr.road || addr.pedestrian || addr.suburb || "";
+              const area = addr.neighbourhood || addr.residential || "";
+              const house = addr.house_number || "";
+
+              const addressLine = [house, street, area].filter(Boolean).join(", ");
+
+              setFormData(prev => ({
+                ...prev,
+                pincode: addr.postcode || prev.pincode,
+                city: addr.city || addr.town || addr.village || addr.county || prev.city,
+                state: addr.state || prev.state,
+                address: addressLine || prev.address
+              }));
+              toast.success("Address details captured!");
+            }
+          } catch (error) {
+            console.error("Reverse geocoding error:", error);
+            toast.error("Located successfully, but failed to fetch address text.");
+          }
         },
         (error) => {
           console.error("Geolocation error:", error);
@@ -50,6 +84,28 @@ const CheckoutAddress = () => {
     e.preventDefault();
     setLoading(true);
 
+    let finalLat = location.lat;
+    let finalLon = location.lon;
+
+    // If no location captured, try forward geocoding
+    if (!finalLat || !finalLon) {
+      try {
+        const query = `${formData.address}, ${formData.city}, ${formData.state}, ${formData.pincode}`;
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+          headers: {
+            'User-Agent': 'ZyraApp/1.0'
+          }
+        });
+        const data = await response.json();
+        if (data && data.length > 0) {
+          finalLat = parseFloat(data[0].lat);
+          finalLon = parseFloat(data[0].lon);
+        }
+      } catch (error) {
+        console.error("Forward geocoding failed:", error);
+      }
+    }
+
     const { error } = await addAddress({
       full_name: formData.fullName,
       phone: formData.mobile,
@@ -59,8 +115,8 @@ const CheckoutAddress = () => {
       state: formData.state,
       postal_code: formData.pincode,
       country: "India", // Defaulting to India
-      latitude: location.lat,
-      longitude: location.lon,
+      latitude: finalLat,
+      longitude: finalLon,
       is_default: true // Set as default for now
     });
 

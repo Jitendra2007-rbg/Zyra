@@ -19,6 +19,8 @@ export interface Shop {
     phone?: string;
     email?: string;
     address?: string;
+    latitude?: number | string;
+    longitude?: number | string;
 }
 
 export interface Order {
